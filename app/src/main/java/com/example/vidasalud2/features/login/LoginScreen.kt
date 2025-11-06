@@ -1,21 +1,18 @@
 package com.example.vidasalud2.features.login
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.vidasalud2.R // Reemplaza con tu logo
 
 @Composable
 fun LoginScreen(
@@ -23,48 +20,36 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: LoginViewModel = viewModel()
 ) {
-    // Obtenemos el estado actual desde el ViewModel
-    val uiState = viewModel.uiState
+    val uiState by viewModel.uiState.collectAsState()
 
-    // --- Diseño de la Interfaz (View) ---
-    // (Basado en Login.jpg)
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Image(
-            painter = painterResource(id = R.drawable.vidasalud_logo), // Tu logo
-            contentDescription = "Logo VidaSalud",
-            modifier = Modifier
-                .size(120.dp)
-                .padding(bottom = 8.dp)
-        )
+        Text("Iniciar Sesión", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(32.dp))
 
-        Text(
-            text = "VidaSalud",
-            style = MaterialTheme.typography.headlineMedium,
-            color = Color(0xFF6FAF4E) // Color verde
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // --- Campo de Usuario ---
+        // --- Campo de Email ---
         OutlinedTextField(
-            value = uiState.username,
-            onValueChange = { viewModel.onUsernameChange(it) },
-            label = { Text("Usuario o Email") },
+            value = uiState.email,
+            onValueChange = { viewModel.onEmailChange(it) },
+            label = { Text("Correo Electrónico") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            isError = uiState.isUsernameError, // Validación visual
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            isError = uiState.emailError != null,
+            supportingText = {
+                // --- INICIO DE LA CORRECCIÓN 1 ---
+                val emailError = uiState.emailError
+                if (emailError != null) {
+                    Text(emailError)
+                }
+                // --- FIN DE LA CORRECCIÓN 1 ---
+            }
         )
-        if (uiState.isUsernameError) {
-            Text("El campo no puede estar vacío", color = MaterialTheme.colorScheme.error)
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         // --- Campo de Contraseña ---
@@ -74,30 +59,47 @@ fun LoginScreen(
             label = { Text("Contraseña") },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            isError = uiState.isPasswordError, // Validación visual
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            isError = uiState.passwordError != null,
+            supportingText = {
+                // --- INICIO DE LA CORRECCIÓN 2 ---
+                val passwordError = uiState.passwordError
+                if (passwordError != null) {
+                    Text(passwordError)
+                }
+                // --- FIN DE LA CORRECCIÓN 2 ---
+            }
         )
-        if (uiState.isPasswordError) {
-            Text("El campo no puede estar vacío", color = MaterialTheme.colorScheme.error)
-        }
+        Spacer(modifier = Modifier.height(24.dp))
 
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // --- Botón de Iniciar Sesión ---
+        // --- Botón de Login ---
         Button(
-            onClick = { viewModel.onLoginClicked(onLoginSuccess) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
-            shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6FAF4E))
+            onClick = { viewModel.onLoginClick(onLoginSuccess) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
         ) {
             if (uiState.isLoading) {
-                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
             } else {
-                Text("Iniciar Sesión", style = MaterialTheme.typography.titleMedium)
+                Text("Iniciar Sesión")
             }
         }
+
+        // --- Error General de Login ---
+        // --- INICIO DE LA CORRECCIÓN 3 ---
+        val loginError = uiState.loginError
+        if (loginError != null) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = loginError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+        // --- FIN DE LA CORRECCIÓN 3 ---
     }
 }

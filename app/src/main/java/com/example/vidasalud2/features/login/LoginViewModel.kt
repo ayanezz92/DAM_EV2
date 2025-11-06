@@ -1,67 +1,85 @@
 package com.example.vidasalud2.features.login
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import android.util.Patterns // Importante para validar email
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-
-// Esta clase contiene el ESTADO de la UI del Login
-data class LoginUiState(
-    val username: String = "",
-    val password: String = "",
-    val isUsernameError: Boolean = false, // Para validación
-    val isPasswordError: Boolean = false, // Para validación
-    val isLoading: Boolean = false
-)
 
 class LoginViewModel : ViewModel() {
 
-    // El estado de la UI (privado)
-    var uiState by mutableStateOf(LoginUiState())
-        private set
+    private val _uiState = MutableStateFlow(LoginUiState())
+    val uiState = _uiState.asStateFlow()
 
-    // Evento que la Vista puede llamar
-    fun onUsernameChange(username: String) {
-        uiState = uiState.copy(username = username, isUsernameError = false)
+    // --- 1. Eventos de cambio de texto ---
+
+    fun onEmailChange(email: String) {
+        _uiState.update { it.copy(email = email, emailError = validateEmail(email)) }
     }
 
-    // Evento que la Vista puede llamar
     fun onPasswordChange(password: String) {
-        uiState = uiState.copy(password = password, isPasswordError = false)
+        _uiState.update { it.copy(password = password, passwordError = validatePassword(password)) }
     }
 
-    // Lógica de validación
-    private fun validateFields(): Boolean {
-        // Tu regla: "Solo no puede estar vacío"
-        val isUsernameValid = uiState.username.isNotBlank()
-        val isPasswordValid = uiState.password.isNotBlank()
+    // --- 2. Lógica de Validación ---
 
-        uiState = uiState.copy(
-            isUsernameError = !isUsernameValid,
-            isPasswordError = !isPasswordValid
-        )
-
-        return isUsernameValid && isPasswordValid
+    private fun validateEmail(email: String): String? {
+        if (email.isBlank()) {
+            return "El correo no puede estar vacío"
+        }
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            return "Formato de correo no válido"
+        }
+        return null // Sin error
     }
 
-    // Evento que la Vista llama al pulsar el botón
-    fun onLoginClicked(onLoginSuccess: () -> Unit) {
-        if (validateFields()) {
-            // Si la validación es correcta...
-            viewModelScope.launch {
-                uiState = uiState.copy(isLoading = true)
+    private fun validatePassword(password: String): String? {
+        if (password.isBlank()) {
+            return "La contraseña no puede estar vacía"
+        }
+        if (password.length < 6) {
+            // Puedes cambiar 6 por tu mínimo requerido
+            return "La contraseña debe tener al menos 6 caracteres"
+        }
+        return null // Sin error
+    }
 
-                // --- Lógica de Autenticación ---
-                // 1. Aquí llamaríamos al Repositorio para verificar en la BD.
-                // 2. Por AHORA, simulamos un éxito.
-                // 3. (En el futuro, si el login falla, mostraríamos un Toast o Snackbar)
+    // --- 3. Evento de Click en Login ---
 
-                uiState = uiState.copy(isLoading = false)
+    fun onLoginClick(onLoginSuccess: () -> Unit) {
+        // Correr validación por si el usuario no tocó los campos
+        val emailError = validateEmail(uiState.value.email)
+        val passwordError = validatePassword(uiState.value.password)
 
-                // 4. Llamamos a la función lambda para navegar
+        if (emailError != null || passwordError != null) {
+            // Mostrar errores y no continuar
+            _uiState.update { it.copy(
+                emailError = emailError,
+                passwordError = passwordError
+            )}
+            return
+        }
+
+        // --- Si la validación es exitosa ---
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, loginError = null) }
+
+            // --- AQUÍ VA TU LÓGICA DE API / FIREBASE ---
+            // val success = authRepository.login(uiState.value.email, uiState.value.password)
+            // ... simulando una llamada ...
+            kotlinx.coroutines.delay(2000)
+            val loginExitoso = true // Cambia esto por tu lógica real
+
+            if (loginExitoso) {
+                // Navega a la siguiente pantalla
                 onLoginSuccess()
+            } else {
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    loginError = "Credenciales incorrectas"
+                )}
             }
         }
     }

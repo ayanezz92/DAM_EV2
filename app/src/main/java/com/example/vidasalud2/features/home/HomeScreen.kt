@@ -1,6 +1,5 @@
 package com.example.vidasalud2.features.home
 
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -14,9 +13,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+// --- IMPORTS AÑADIDOS ---
+import androidx.navigation.NavController
+import com.example.vidasalud2.navigation.AppScreens
 
 @Composable
-fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
+fun HomeScreen(
+    viewModel: HomeViewModel = viewModel(),
+    navController: NavController // <-- 1. PARÁMETRO AÑADIDO
+) {
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -31,16 +36,13 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                // ... (el resto de tu Row)
             ) {
-                // (Aquí irían los IconButtons de Ajustes y Notificaciones)
                 Text(
                     text = "Hola, ${uiState.userName}",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
-                // (Icono de Notificaciones)
             }
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -85,7 +87,10 @@ fun HomeScreen(viewModel: HomeViewModel = viewModel()) {
                         modifier = Modifier.weight(1f)
                     )
                     Button(
-                        onClick = { /* TODO */ },
+                        // --- 2. ACCIÓN DE CLICK MODIFICADA ---
+                        onClick = {
+                            navController.navigate(AppScreens.RecommendationDetail.route)
+                        },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6FAF4E))
                     ) {
                         Text("Ver más")
@@ -108,10 +113,8 @@ fun SummaryCard(title: String, value: String) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // (Aquí iría el ícono de Sueño/Actividad/Nutrición)
             Text(text = title, style = MaterialTheme.typography.titleSmall)
             Text(text = value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-            // (Aquí iría la barra de progreso lineal de la maqueta)
         }
     }
 }

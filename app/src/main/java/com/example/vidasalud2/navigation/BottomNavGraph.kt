@@ -1,35 +1,42 @@
 package com.example.vidasalud2.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.vidasalud2.features.analysis.AnalysisScreen
 import com.example.vidasalud2.features.community.CommunityScreen
 import com.example.vidasalud2.features.home.HomeScreen
 import com.example.vidasalud2.features.profile.ProfileScreen
 import com.example.vidasalud2.features.register.RegisterScreen
-import com.example.vidasalud2.features.community.CommunityScreen // Lo crearemos
-import com.example.vidasalud2.features.home.HomeScreen // Lo crearemos
-import com.example.vidasalud2.features.profile.ProfileScreen // Lo crearemos
-import com.example.vidasalud2.features.register.RegisterScreen // Lo crearemos
 
 @Composable
-fun BottomNavGraph(navController: NavHostController) {
+fun BottomNavGraph(
+    navController: NavHostController,
+    mainNavController: NavController
+) {
     NavHost(
         navController = navController,
         startDestination = BottomNavScreen.Home.route
     ) {
-        composable(route = BottomNavScreen.Home.route) {
-            HomeScreen()
+
+        composable(BottomNavScreen.Home.route) {
+            HomeScreen(navController = mainNavController)
         }
-        composable(route = BottomNavScreen.Register.route) {
-            RegisterScreen()
-        }
-        composable(route = BottomNavScreen.Community.route) {
+
+        composable(BottomNavScreen.Community.route) {
             CommunityScreen()
         }
-        composable(route = BottomNavScreen.Profile.route) {
-            ProfileScreen()
+
+        composable(BottomNavScreen.Register.route) {
+            RegisterScreen()
+        }
+
+        // --- LÍNEA CORREGIDA ---
+        composable(BottomNavScreen.Profile.route) {
+            // Pasamos el controlador principal para que Profile pueda navegar
+            ProfileScreen(mainNavController = mainNavController)
         }
     }
 }

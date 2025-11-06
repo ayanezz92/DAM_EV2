@@ -21,7 +21,7 @@ import com.example.vidasalud2.navigation.BottomNavScreen
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun MainScreen(mainNavController: NavController) {
+fun MainScreen(mainNavController: NavController) { // <-- Este es el controlador principal
     // Este es el NavController para la barra inferior (anidado)
     val bottomNavController = rememberNavController()
 
@@ -31,7 +31,13 @@ fun MainScreen(mainNavController: NavController) {
         // Pasamos el padding al gráfico de navegación anidado
         Box(modifier = Modifier.padding(paddingValues)) {
             // El NavHost que controla las 4 pantallas principales
-            BottomNavGraph(navController = bottomNavController)
+
+            // --- AQUÍ ESTÁ LA CORRECCIÓN ---
+            // Le pasamos el controlador principal al grafo inferior
+            BottomNavGraph(
+                navController = bottomNavController,
+                mainNavController = mainNavController // <-- PARÁMETRO AÑADIDO
+            )
         }
     }
 }
@@ -41,7 +47,7 @@ fun MainScreen(mainNavController: NavController) {
 fun BottomBar(navController: NavHostController) {
     val screens = listOf(
         BottomNavScreen.Home,
-        BottomNavScreen.Register,
+        BottomNavScreen.Register, // (Nota: Es raro tener "Register" en la barra inferior)
         BottomNavScreen.Community,
         BottomNavScreen.Profile
     )
@@ -62,7 +68,6 @@ fun BottomBar(navController: NavHostController) {
                         launchSingleTop = true
                     }
                 }
-                // Aquí puedes agregar colores personalizados (selectedIconColor, etc.)
             )
         }
     }
