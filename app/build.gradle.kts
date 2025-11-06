@@ -1,18 +1,19 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.compose) // <-- ¡AQUÍ ESTÁ! La línea que faltaba.
 }
 
 android {
     namespace = "com.example.vidasalud2"
-    compileSdk {
-        version = release(36)
-    }
+
+    // Corrección de sintaxis
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.vidasalud2"
         minSdk = 24
+        // Corrección de sintaxis
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -39,9 +40,18 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.1"
+    }
 }
 
 dependencies {
+
+    // Tus dependencias (ahora sin duplicados)
+    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Tus dependencias originales del catálogo 'libs'
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -50,6 +60,8 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+
+    // Tus dependencias de Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -57,18 +69,20 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Tus otras dependencias manuales
     implementation(platform("androidx.compose:compose-bom:2024.05.00"))
     implementation("androidx.activity:activity-compose:1.9.0")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
+
+    // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     annotationProcessor("androidx.room:room-compiler:2.6.1")
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
 }

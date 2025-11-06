@@ -2,36 +2,55 @@ package com.example.vidasalud2.features.register
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-// Asegúrate de importar tu ViewModel y UiState si están en otro paquete
-import com.example.vidasalud2.features.register.RegisterViewModel
-import com.example.vidasalud2.features.register.RegisterUiState
-import com.example.vidasalud2.features.register.RegisterTab
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(viewModel: RegisterViewModel = viewModel()) {
 
     val uiState by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // --- INICIO DE LA CORRECCIÓN ---
+    // 1. Copiamos el valor a una variable local estable
+    val saveMessage = uiState.saveMessage
+
+    // 2. Usamos esa variable local en el LaunchedEffect
+    LaunchedEffect(saveMessage) {
+        if (saveMessage != null) {
+            snackbarHostState.showSnackbar(saveMessage) // 3. Usamos la copia
+            viewModel.onSaveMessageShown()
+        }
+    }
+    // --- FIN DE LA CORRECCIÓN ---
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.onSaveData() },
                 containerColor = Color(0xFF6FAF4E)
             ) {
-                // (Icono de Guardar/Check)
-                Text("Guardar", modifier = Modifier.padding(horizontal = 16.dp))
+                if (uiState.isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                } else {
+                    Text("Guardar", modifier = Modifier.padding(horizontal = 16.dp))
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.End
@@ -51,10 +70,8 @@ fun RegisterScreen(viewModel: RegisterViewModel = viewModel()) {
                 )
             }
 
-            // --- Selector de Tabs ---
             item {
                 TabRow(selectedTabIndex = uiState.selectedTab.ordinal) {
-                    // Asumiendo que RegisterTab es un enum: enum class RegisterTab { Actividad, Alimentacion, Sueño }
                     RegisterTab.values().forEach { tab ->
                         Tab(
                             selected = uiState.selectedTab == tab,
@@ -66,79 +83,94 @@ fun RegisterScreen(viewModel: RegisterViewModel = viewModel()) {
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            // --- Contenido del Formulario (basado en el Tab) ---
             when (uiState.selectedTab) {
-                RegisterTab.Actividad -> item { ActivityForm(uiState, viewModel) } // Pasamos el viewModel
-                RegisterTab.Alimentacion -> item { FoodForm(uiState, viewModel) } // Pasamos el viewModel
-                RegisterTab.Sueño -> item { SleepForm() } // (Pasar viewModel si es necesario)
+                RegisterTab.Actividad -> item { ActivityForm(uiState, viewModel) }
+                RegisterTab.Alimentacion -> item { FoodForm(uiState, viewModel) }
+                RegisterTab.Sueño -> item { SleepForm(uiState, viewModel) }
             }
         }
     }
 }
 
-// --- Composable para el formulario de Actividad ---
 @Composable
 fun ActivityForm(uiState: RegisterUiState, viewModel: RegisterViewModel) {
     Column {
         Text("Actividad", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
             value = uiState.activityType,
-            onValueChange = { viewModel.onActivityTypeChange(it) }, // ¡CORREGIDO!
+            onValueChange = { viewModel.onActivityTypeChange(it) },
             label = { Text("Tipo") },
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
-            value = uiState.duration, // Asumimos que duration es un String en UiState
-            onValueChange = { viewModel.onDurationChange(it) }, // ¡CORREGIDO!
+            value = uiState.duration,
+            onValueChange = { viewModel.onDurationChange(it) },
             label = { Text("Duración (Minutos)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
-            // (Considera usar KeyboardOptions para un teclado numérico)
         )
         Spacer(modifier = Modifier.height(16.dp))
-
-        Text("Intensidad: ${uiState.intensity.toInt()}/5") // Mostramos valor
+        Text("Intensidad: ${uiState.intensity.toInt()}/5")
         Slider(
             value = uiState.intensity,
-            onValueChange = { viewModel.onIntensityChange(it) }, // ¡CORREGIDO!
-            valueRange = 0f..5f, // Rango definido
-            steps = 4, // 5 pasos (0, 1, 2, 3, 4, 5)
+            onValueChange = { viewModel.onIntensityChange(it) },
+            valueRange = 0f..5f,
+            steps = 4,
             colors = SliderDefaults.colors(thumbColor = Color(0xFF6FAF4E), activeTrackColor = Color(0xFF6FAF4E))
         )
     }
 }
 
-// --- Composable para el formulario de Alimentación ---
 @Composable
 fun FoodForm(uiState: RegisterUiState, viewModel: RegisterViewModel) {
     Column {
         Text("Alimentación", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
             value = uiState.foodItem,
-            onValueChange = { viewModel.onFoodItemChange(it) }, // ¡CORREGIDO!
+            onValueChange = { viewModel.onFoodItemChange(it) },
             label = { Text("Artículo") },
             modifier = Modifier.fillMaxWidth()
         )
-        // (Resto de campos: Porción, Hora)
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = uiState.foodCalories,
+            onValueChange = { viewModel.onFoodCaloriesChange(it) },
+            label = { Text("Calorías (kcal)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
-// --- Composable para el formulario de Sueño (Placeholder) ---
 @Composable
-fun SleepForm() {
-    Text("Formulario de Sueño (A construir)")
+fun SleepForm(uiState: RegisterUiState, viewModel: RegisterViewModel) {
+    Column {
+        Text("Sueño", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(16.dp))
+        OutlinedTextField(
+            value = uiState.sleepHours,
+            onValueChange = { viewModel.onSleepHoursChange(it) },
+            label = { Text("Horas de Sueño") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Calidad del Sueño: ${uiState.sleepQuality.toInt()}/5")
+        Slider(
+            value = uiState.sleepQuality,
+            onValueChange = { viewModel.onSleepQualityChange(it) },
+            valueRange = 1f..5f,
+            steps = 3,
+            colors = SliderDefaults.colors(thumbColor = Color(0xFF6FAF4E), activeTrackColor = Color(0xFF6FAF4E))
+        )
+    }
 }
 
-// --- (Asegúrate de tener esta enum class, puede ir en este archivo o en otro) ---
 enum class RegisterTab {
     Actividad,
     Alimentacion,
     Sueño
 }
-
-// (El UiState y ViewModel de ejemplo se omiten ya que están en sus propios archivos)
