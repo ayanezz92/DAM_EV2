@@ -1,20 +1,19 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose) // <-- ¡AQUÍ ESTÁ! La línea que faltaba.
+    alias(libs.plugins.kotlin.compose)
+    // Es probable que necesites KSP para Room, si no lo tienes, agrégalo:
+    // id("com.google.devtools.ksp") version "2.0.21-1.0.21" // Asegúrate que la versión sea compatible
 }
 
 android {
     namespace = "com.example.vidasalud2"
-
-    // Corrección de sintaxis
-    compileSdk = 36
+    compileSdk = 34 // CORREGIDO: 36 no es una versión estable, 34 sí.
 
     defaultConfig {
         applicationId = "com.example.vidasalud2"
         minSdk = 24
-        // Corrección de sintaxis
-        targetSdk = 36
+        targetSdk = 34 // CORREGIDO: 36 no es una versión estable, 34 sí.
         versionCode = 1
         versionName = "1.0"
 
@@ -41,17 +40,15 @@ android {
         compose = true
     }
     composeOptions {
+        // Esta versión es antigua, pero la mantengo.
+        // Si actualizas Kotlin, deberás actualizar esto.
         kotlinCompilerExtensionVersion = "1.5.1"
     }
 }
 
 dependencies {
 
-    // Tus dependencias (ahora sin duplicados)
-    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
-    // Tus dependencias originales del catálogo 'libs'
+    // --- DEPENDENCIAS PRINCIPALES (Usando tu catálogo 'libs') ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -61,7 +58,19 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // Tus dependencias de Test
+    // --- DEPENDENCIAS MANUALES (Que no estaban en 'libs') ---
+    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // --- ROOM (Como lo tenías) ---
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    // OJO: Si usas KSP, esto debería ser 'ksp' en lugar de 'annotationProcessor'
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+
+    // --- DEPENDENCIAS DE TEST (Usando tu catálogo 'libs') ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -70,19 +79,25 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Tus otras dependencias manuales
-    implementation(platform("androidx.compose:compose-bom:2024.05.00"))
-    implementation("androidx.activity:activity-compose:1.9.0")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
+    // --- [INICIO] DEPENDENCIAS AGREGADAS (GUÍA 15) ---
 
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    // Kotest (Para pruebas unitarias más legibles)
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 
-    // Room
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    // JUnit 5 (El motor de pruebas)
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+
+    // MockK (Para simular respuestas de la API)
+    testImplementation("io.mockk:mockk:1.13.10")
+
+    // Corrutinas Test (Para probar funciones suspendidas)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+    // --- [FIN] DEPENDENCIAS AGREGADAS (GUÍA 15) ---
+}
+
+
+tasks.withType<Test> {
+    useJUnitPlatform()
 }
