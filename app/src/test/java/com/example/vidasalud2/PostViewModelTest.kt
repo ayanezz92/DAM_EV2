@@ -4,7 +4,7 @@ package com.example.vidasalud2.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vidasalud2.data.model.Post
-import com.example.vidasalud2.repository.PostRepository
+import com.example.vidasalud2.model.PostRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
