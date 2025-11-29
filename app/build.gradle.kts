@@ -1,25 +1,26 @@
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose) // <-- ¡AQUÍ ESTÁ! La línea que faltaba.
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.kapt")
+    // 👇 ESTE ES EL PLUGIN QUE FALTABA Y SOLUCIONA EL ERROR DE KOTLIN 2.0
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.example.vidasalud2"
-
-    // Corrección de sintaxis
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.vidasalud2"
         minSdk = 24
-        // Corrección de sintaxis
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -41,18 +42,21 @@ android {
     buildFeatures {
         compose = true
     }
+    // 👇 En Kotlin 2.0, este bloque se deja vacío o se borra
+    // El plugin se encarga de la versión automáticamente.
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
 dependencies {
 
-    // Tus dependencias (ahora sin duplicados)
-    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
-    // Tus dependencias originales del catálogo 'libs'
+    // --- DEPENDENCIAS DEL CATÁLOGO (libs) ---
+    // Si alguna sale en rojo, avísame (significa que tu proyecto no tiene el archivo libs.versions.toml)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -62,7 +66,19 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
 
-    // Tus dependencias de Test
+    // --- DEPENDENCIAS MANUALES EXTRAS ---
+    implementation("androidx.compose.material:material-icons-extended-android:1.6.7")
+    implementation("io.coil-kt:coil-compose:2.6.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+
+    // --- ROOM DATABASE (Configuración correcta para KAPT) ---
+    val room_version = "2.6.1"
+    implementation("androidx.room:room-runtime:$room_version")
+    implementation("androidx.room:room-ktx:$room_version")
+    kapt("androidx.room:room-compiler:$room_version")
+
+    // --- TESTING ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -71,20 +87,10 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
-    // Tus otras dependencias manuales
-    implementation(platform("androidx.compose:compose-bom:2024.05.00"))
-    implementation("androidx.activity:activity-compose:1.9.0")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-
-    implementation("androidx.navigation:navigation-compose:2.7.7")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
-
-    // Room
-    val room_version = "2.6.1"
-    implementation("androidx.room:room-runtime:2.6.1")
-    implementation("androidx.room:room-ktx:2.6.1")
-    kapt("androidx.room:room-compiler:$room_version")
+    // Test Unitarios Adicionales
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    testImplementation("io.mockk:mockk:1.13.10")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 }
