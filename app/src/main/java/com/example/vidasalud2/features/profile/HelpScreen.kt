@@ -129,7 +129,7 @@ private fun FaqItemCard(faq: FaqItem) {
             }
 
             if (expanded) {
-                Divider(modifier = Modifier.padding(horizontal = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Text(
                     text = faq.answer,
                     style = MaterialTheme.typography.bodyMedium,

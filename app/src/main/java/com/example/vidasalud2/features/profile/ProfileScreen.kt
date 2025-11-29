@@ -116,6 +116,6 @@ private fun ProfileRowItem(text: String, onClick: () -> Unit) {
             fontSize = 18.sp,
             modifier = Modifier.padding(vertical = 16.dp)
         )
-        Divider(color = Color.LightGray)
+        HorizontalDivider(color = Color.LightGray)
     }
 }

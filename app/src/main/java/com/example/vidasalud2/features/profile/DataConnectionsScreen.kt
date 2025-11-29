@@ -67,7 +67,7 @@ fun DataConnectionsScreen(
                 onCheckedChange = { googleFitConnected = it }
             )
 
-            Divider()
+            HorizontalDivider()
 
             ConnectionRow(
                 text = "Samsung Health",
@@ -76,7 +76,7 @@ fun DataConnectionsScreen(
                 onCheckedChange = { samsungHealthConnected = it }
             )
 
-            Divider()
+           HorizontalDivider()
         }
     }
 }

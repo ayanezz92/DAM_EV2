@@ -65,7 +65,7 @@ fun NotificationsScreen(
                 onCheckedChange = { newAchievements = it }
             )
 
-            Divider()
+            HorizontalDivider()
 
             // Fila para Recordatorios
             NotificationRow(
@@ -74,7 +74,7 @@ fun NotificationsScreen(
                 onCheckedChange = { registrationReminders = it }
             )
 
-            Divider()
+            HorizontalDivider()
 
             // Fila para Noticias
             NotificationRow(
@@ -83,7 +83,7 @@ fun NotificationsScreen(
                 onCheckedChange = { communityNews = it }
             )
 
-            Divider()
+            HorizontalDivider()
         }
     }
 }

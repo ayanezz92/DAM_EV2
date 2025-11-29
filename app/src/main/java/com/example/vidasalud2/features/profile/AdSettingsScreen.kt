@@ -65,7 +65,7 @@ fun AdSettingsScreen(
                 onCheckedChange = { personalizedAds = it }
             )
 
-            Divider()
+            HorizontalDivider()
 
             // Fila para Compartir Datos
             AdSettingRow(
@@ -75,7 +75,7 @@ fun AdSettingsScreen(
                 onCheckedChange = { shareData = it }
             )
 
-            Divider()
+            HorizontalDivider()
         }
     }
 }
