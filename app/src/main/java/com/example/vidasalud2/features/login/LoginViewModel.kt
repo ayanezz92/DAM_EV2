@@ -1,85 +1,46 @@
 package com.example.vidasalud2.features.login
 
-import android.util.Patterns // Importante para validar email
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState = _uiState.asStateFlow()
+    // 1. Estados que la pantalla está escuchando
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading = _isLoading.asStateFlow()
 
-    // --- 1. Eventos de cambio de texto ---
+    private val _loginError = MutableStateFlow<String?>(null)
+    val loginError = _loginError.asStateFlow()
 
-    fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email, emailError = validateEmail(email)) }
-    }
+    private val _loginSuccess = MutableStateFlow(false)
+    val loginSuccess = _loginSuccess.asStateFlow()
 
-    fun onPasswordChange(password: String) {
-        _uiState.update { it.copy(password = password, passwordError = validatePassword(password)) }
-    }
-
-    // --- 2. Lógica de Validación ---
-
-    private fun validateEmail(email: String): String? {
-        if (email.isBlank()) {
-            return "El correo no puede estar vacío"
-        }
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            return "Formato de correo no válido"
-        }
-        return null // Sin error
-    }
-
-    private fun validatePassword(password: String): String? {
-        if (password.isBlank()) {
-            return "La contraseña no puede estar vacía"
-        }
-        if (password.length < 6) {
-            // Puedes cambiar 6 por tu mínimo requerido
-            return "La contraseña debe tener al menos 6 caracteres"
-        }
-        return null // Sin error
-    }
-
-    // --- 3. Evento de Click en Login ---
-
-    fun onLoginClick(onLoginSuccess: () -> Unit) {
-        // Correr validación por si el usuario no tocó los campos
-        val emailError = validateEmail(uiState.value.email)
-        val passwordError = validatePassword(uiState.value.password)
-
-        if (emailError != null || passwordError != null) {
-            // Mostrar errores y no continuar
-            _uiState.update { it.copy(
-                emailError = emailError,
-                passwordError = passwordError
-            )}
-            return
-        }
-
-        // --- Si la validación es exitosa ---
+    // 2. Función para intentar loguearse
+    fun login(email: String, pass: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, loginError = null) }
+            // Validaciones simples
+            if (email.isBlank() || pass.isBlank()) {
+                _loginError.value = "Por favor, llena todos los campos."
+                return@launch
+            }
 
-            // --- AQUÍ VA TU LÓGICA DE API / FIREBASE ---
-            // val success = authRepository.login(uiState.value.email, uiState.value.password)
-            // ... simulando una llamada ...
-            kotlinx.coroutines.delay(2000)
-            val loginExitoso = true // Cambia esto por tu lógica real
+            // Simulamos carga de red (2 segundos)
+            _isLoading.value = true
+            _loginError.value = null // Limpiamos errores previos
+            delay(2000)
 
-            if (loginExitoso) {
-                // Navega a la siguiente pantalla
-                onLoginSuccess()
+            // Simulamos lógica de éxito
+            // (Aquí podrías conectar con Firebase o tu Backend en el futuro)
+            if (pass.length >= 4) { // Ejemplo: si la contraseña tiene más de 4 letras, pasa
+                _isLoading.value = false
+                _loginSuccess.value = true
             } else {
-                _uiState.update { it.copy(
-                    isLoading = false,
-                    loginError = "Credenciales incorrectas"
-                )}
+                _isLoading.value = false
+                _loginError.value = "Contraseña incorrecta (usa min 4 caracteres)"
             }
         }
     }
