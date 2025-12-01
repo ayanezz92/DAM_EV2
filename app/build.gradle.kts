@@ -72,6 +72,11 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
 
+    // --- API Y CONEXIÓN (AGREGADO PARA EL CLIMA) ---
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     // --- ROOM DATABASE (Configuración correcta para KAPT) ---
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")
