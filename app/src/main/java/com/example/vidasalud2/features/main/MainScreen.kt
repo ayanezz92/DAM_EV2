@@ -49,6 +49,7 @@ fun BottomBar(navController: NavHostController) {
         BottomNavScreen.Home,
         BottomNavScreen.Register, // (Nota: Es raro tener "Register" en la barra inferior)
         BottomNavScreen.Community,
+        BottomNavScreen.Analysis,
         BottomNavScreen.Profile
     )
 

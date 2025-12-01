@@ -1,127 +1,155 @@
 package com.example.vidasalud2.features.register
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.vidasalud2.data.local.AppDatabase
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegisterScreen(viewModel: RegisterViewModel = viewModel()) {
-
-    val uiState by viewModel.uiState.collectAsState()
+fun RegisterScreen() {
     val context = LocalContext.current
+    val database = AppDatabase.getDatabase(context)
+    val dao = database.activityDao()
+    val viewModel: RegisterViewModel = viewModel(
+        factory = RegisterViewModelFactory(dao)
+    )
 
-    Scaffold(
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.onSaveData(context) },
-                containerColor = Color(0xFF6FAF4E)
-            ) {
-                Text("Guardar", modifier = Modifier.padding(horizontal = 16.dp))
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-        ) {
-            item {
-                Text(
-                    text = "Añadir Nuevo Registro",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 16.dp)
+    // --- ESCUCHAR MENSAJES DE CONFIRMACIÓN ---
+    val message by viewModel.saveMessage.collectAsState()
+    LaunchedEffect(message) {
+        message?.let {
+            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            viewModel.clearMessage()
+        }
+    }
+
+    var selectedTabIndex by remember { mutableStateOf(0) }
+    val tabs = listOf("Actividad", "Alimentación", "Sueño")
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Registro Diario", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TabRow(selectedTabIndex = selectedTabIndex) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = selectedTabIndex == index,
+                    onClick = { selectedTabIndex = index },
+                    text = { Text(title) }
                 )
             }
+        }
+        Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Selector de Tabs ---
-            item {
-                // AQUÍ ESTABA EL ERROR: Asegúrate de que 'ordinal' se refiere a la propiedad del enum
-                TabRow(selectedTabIndex = uiState.selectedTab.ordinal) {
-                    // Iteramos sobre los valores del ENUM
-                    RegisterTab.values().forEach { tab ->
-                        Tab(
-                            selected = uiState.selectedTab == tab,
-                            onClick = { viewModel.onTabSelected(tab) },
-                            text = { Text(tab.name) } // 'name' es propiedad del enum
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-            }
-
-            // --- Contenido del Formulario ---
-            when (uiState.selectedTab) {
-                RegisterTab.Actividad -> item { ActivityForm(uiState, viewModel) }
-                RegisterTab.Alimentacion -> item { FoodForm(uiState, viewModel) }
-                RegisterTab.Sueño -> item { SleepForm() }
-            }
+        // --- AQUÍ CONECTAMOS LOS 3 FORMULARIOS ---
+        when (selectedTabIndex) {
+            0 -> ActivityForm(viewModel) // ¡Aquí está el que faltaba!
+            1 -> FoodForm(viewModel)
+            2 -> SleepForm(viewModel)
         }
     }
 }
 
-// ... (El resto de funciones ActivityForm, FoodForm, SleepForm quedan igual)
+// --- 1. FORMULARIO DE ACTIVIDAD (RECUPERADO) ---
 @Composable
-fun ActivityForm(uiState: RegisterUiState, viewModel: RegisterViewModel) {
+fun ActivityForm(viewModel: RegisterViewModel) {
+    val name by viewModel.activityName.collectAsState()
+    val duration by viewModel.activityDuration.collectAsState()
+    val intensity by viewModel.activityIntensity.collectAsState()
+
     Column {
-        Text("Actividad", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
-
         OutlinedTextField(
-            value = uiState.activityType,
-            onValueChange = { viewModel.onActivityTypeChange(it) },
-            label = { Text("Tipo") },
+            value = name,
+            onValueChange = { viewModel.onActivityNameChange(it) },
+            label = { Text("Tipo de Actividad (Ej: Correr)") },
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = uiState.duration,
-            onValueChange = { viewModel.onDurationChange(it) },
-            label = { Text("Duración (Minutos)") },
+            value = duration,
+            onValueChange = { viewModel.onActivityDurationChange(it) },
+            label = { Text("Duración (minutos)") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
-        Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Intensidad: ${uiState.intensity.toInt()}/5")
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Intensidad: ${intensity.toInt()}")
         Slider(
-            value = uiState.intensity,
-            onValueChange = { viewModel.onIntensityChange(it) },
-            valueRange = 0f..5f,
-            steps = 4,
-            colors = SliderDefaults.colors(thumbColor = Color(0xFF6FAF4E), activeTrackColor = Color(0xFF6FAF4E))
+            value = intensity,
+            onValueChange = { viewModel.onActivityIntensityChange(it) },
+            valueRange = 1f..5f,
+            steps = 3
         )
+
+        Button(onClick = { viewModel.saveActivity() }, modifier = Modifier.fillMaxWidth()) {
+            Text("Guardar Actividad")
+        }
     }
 }
 
+// --- 2. FORMULARIO DE ALIMENTACIÓN ---
 @Composable
-fun FoodForm(uiState: RegisterUiState, viewModel: RegisterViewModel) {
-    Column {
-        Text("Alimentación", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
+fun FoodForm(viewModel: RegisterViewModel) {
+    val foodName by viewModel.foodName.collectAsState()
+    val calories by viewModel.calories.collectAsState()
 
+    Column {
         OutlinedTextField(
-            value = uiState.foodItem,
-            onValueChange = { viewModel.onFoodItemChange(it) },
-            label = { Text("Artículo") },
+            value = foodName,
+            onValueChange = { viewModel.onFoodNameChange(it) },
+            label = { Text("¿Qué comiste?") },
             modifier = Modifier.fillMaxWidth()
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = calories,
+            onValueChange = { viewModel.onCaloriesChange(it) },
+            label = { Text("Calorías") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = { viewModel.saveFood() }, modifier = Modifier.fillMaxWidth()) {
+            Text("Guardar Comida")
+        }
     }
 }
 
+// --- 3. FORMULARIO DE SUEÑO ---
 @Composable
-fun SleepForm() {
-    Text("Formulario de Sueño (A construir)")
+fun SleepForm(viewModel: RegisterViewModel) {
+    val hours by viewModel.sleepHours.collectAsState()
+    val quality by viewModel.sleepQuality.collectAsState()
+
+    Column {
+        OutlinedTextField(
+            value = hours,
+            onValueChange = { viewModel.onSleepHoursChange(it) },
+            label = { Text("Horas dormidas") },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text("Calidad: ${if(quality < 2) "Mala" else if (quality < 3) "Regular" else "Buena"}")
+        Slider(
+            value = quality,
+            onValueChange = { viewModel.onSleepQualityChange(it) },
+            valueRange = 1f..3f,
+            steps = 1
+        )
+
+        Button(onClick = { viewModel.saveSleep() }, modifier = Modifier.fillMaxWidth()) {
+            Text("Guardar Sueño")
+        }
+    }
 }

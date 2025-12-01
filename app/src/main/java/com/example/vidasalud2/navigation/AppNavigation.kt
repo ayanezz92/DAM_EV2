@@ -1,10 +1,6 @@
 package com.example.vidasalud2.navigation
 
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,9 +11,11 @@ import com.example.vidasalud2.features.profile.SubscriptionScreen
 import com.example.vidasalud2.features.profile.DataConnectionsScreen
 import com.example.vidasalud2.features.profile.NotificationsScreen
 import com.example.vidasalud2.features.profile.HelpScreen
-// --- IMPORTACIÓN AÑADIDA ---
 import com.example.vidasalud2.features.profile.AdSettingsScreen
 import com.vidasalud.features.splash.SplashScreen
+
+// --- IMPORTACIÓN NUEVA (Para ver la pantalla de datos) ---
+import com.example.vidasalud2.features.analysis.HistoryScreen
 
 @Composable
 fun AppNavigation() {
@@ -67,10 +65,14 @@ fun AppNavigation() {
             HelpScreen(navController = navController)
         }
 
-        // --- LÍNEA CORREGIDA ---
-        // Reemplazamos el último placeholder
         composable(AppScreens.AdSettings.route) {
             AdSettingsScreen(navController = navController)
+        }
+
+        // --- RUTA NUEVA AGREGADA ---
+        // Esto conecta la ruta "analysis_screen" con tu pantalla de Historial
+        composable(AppScreens.Analysis.route) {
+            HistoryScreen()
         }
     }
 }

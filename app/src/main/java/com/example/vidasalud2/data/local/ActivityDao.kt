@@ -7,11 +7,25 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ActivityDao {
-    // Función para insertar una actividad
-    @Insert
-    suspend fun insertActivity(activity: ActivityEntity)
 
-    // Función para leer todas las actividades (ordenadas por fecha)
-    @Query("SELECT * FROM activity_table ORDER BY date DESC")
-    fun getAllActivities(): Flow<List<ActivityEntity>>
+    // --- ACTIVIDAD FÍSICA ---
+    @Insert
+    suspend fun insertar(activity: ActivityEntity)
+
+    @Query("SELECT * FROM activity_table ORDER BY id DESC")
+    fun obtenerTodas(): Flow<List<ActivityEntity>>
+
+    // --- ALIMENTACIÓN ---
+    @Insert
+    suspend fun insertFood(food: FoodEntity)
+
+    @Query("SELECT * FROM food_table ORDER BY timestamp DESC")
+    fun getAllFood(): Flow<List<FoodEntity>>
+
+    // --- SUEÑO ---
+    @Insert
+    suspend fun insertSleep(sleep: SleepEntity)
+
+    @Query("SELECT * FROM sleep_table ORDER BY timestamp DESC")
+    fun getAllSleep(): Flow<List<SleepEntity>>
 }

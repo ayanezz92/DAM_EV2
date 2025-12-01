@@ -5,8 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-// Definimos las entidades (tablas) y la versión
-@Database(entities = [ActivityEntity::class], version = 1, exportSchema = false)
+// 1. AQUÍ AGREGAMOS LAS NUEVAS ENTIDADES (TABLAS)
+@Database(
+    entities = [ActivityEntity::class, FoodEntity::class, SleepEntity::class],
+    version = 2, // 2. SUBIMOS LA VERSIÓN DE 1 A 2
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun activityDao(): ActivityDao
@@ -16,13 +20,15 @@ abstract class AppDatabase : RoomDatabase() {
         private var INSTANCE: AppDatabase? = null
 
         fun getDatabase(context: Context): AppDatabase {
-            // Si la instancia ya existe, la devolvemos. Si no, la creamos.
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
-                    "vidasalud_db" // Nombre del archivo de la BD
-                ).build()
+                    "app_database"
+                )
+                    // 3. IMPORTANTE: ESTO BORRA LA BD VIEJA SI CAMBIA LA VERSIÓN (EVITA CRASHES)
+                    .fallbackToDestructiveMigration()
+                    .build()
                 INSTANCE = instance
                 instance
             }

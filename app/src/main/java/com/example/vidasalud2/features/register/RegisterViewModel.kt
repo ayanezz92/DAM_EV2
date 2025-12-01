@@ -1,60 +1,149 @@
 package com.example.vidasalud2.features.register
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.example.vidasalud2.data.local.ActivityDao
 import com.example.vidasalud2.data.local.ActivityEntity
-import com.example.vidasalud2.data.local.AppDatabase
+import com.example.vidasalud2.data.local.FoodEntity
+import com.example.vidasalud2.data.local.SleepEntity
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class RegisterViewModel : ViewModel() {
+class RegisterViewModel(private val dao: ActivityDao) : ViewModel() {
 
-    // Ahora usa la clase RegisterUiState del otro archivo automáticamente
-    private val _uiState = MutableStateFlow(RegisterUiState())
-    val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
+    // --- MENSAJES (TOAST) ---
+    private val _saveMessage = MutableStateFlow<String?>(null)
+    val saveMessage = _saveMessage.asStateFlow()
 
-    fun onTabSelected(tab: RegisterTab) {
-        _uiState.update { it.copy(selectedTab = tab) }
-    }
+    fun clearMessage() { _saveMessage.value = null }
 
-    fun onSaveData(context: Context) {
+    // ===========================
+    // 1. LÓGICA DE ACTIVIDAD
+    // ===========================
+    private val _activityName = MutableStateFlow("")
+    val activityName = _activityName.asStateFlow()
+
+    private val _activityDuration = MutableStateFlow("")
+    val activityDuration = _activityDuration.asStateFlow()
+
+    private val _activityIntensity = MutableStateFlow(1f)
+    val activityIntensity = _activityIntensity.asStateFlow()
+
+    fun onActivityNameChange(text: String) { _activityName.value = text }
+    fun onActivityDurationChange(text: String) { _activityDuration.value = text }
+    fun onActivityIntensityChange(value: Float) { _activityIntensity.value = value }
+
+    fun saveActivity() {
+        // --- VALIDACIÓN: Si está vacío, no guardar ---
+        if (_activityName.value.isBlank() || _activityDuration.value.isBlank()) {
+            _saveMessage.value = "Error: Debes ingresar nombre y duración"
+            return // Se detiene aquí y no guarda
+        }
+
         viewModelScope.launch {
-            val database = AppDatabase.getDatabase(context)
-            val dao = database.activityDao()
+            try {
+                val activity = ActivityEntity(
+                    type = _activityName.value,
+                    duration = _activityDuration.value,
+                    intensity = _activityIntensity.value
+                )
+                dao.insertar(activity)
 
-            val newActivity = ActivityEntity(
-                type = _uiState.value.activityType.ifBlank { "Actividad General" },
-                duration = _uiState.value.duration,
-                intensity = _uiState.value.intensity
-            )
-
-            dao.insertActivity(newActivity)
-            println("✅ GUARDADO EN ROOM: $newActivity")
-
-            // Limpiar campos
-            _uiState.update { it.copy(activityType = "", duration = "0", intensity = 2.5f) }
+                // Limpiar y avisar
+                _activityName.value = ""
+                _activityDuration.value = ""
+                _activityIntensity.value = 1f
+                _saveMessage.value = "¡Actividad guardada correctamente!"
+            } catch (e: Exception) {
+                _saveMessage.value = "Error al guardar: ${e.message}"
+            }
         }
     }
 
-    fun onActivityTypeChange(type: String) {
-        _uiState.update { it.copy(activityType = type) }
-    }
+    // ===========================
+    // 2. LÓGICA DE ALIMENTACIÓN
+    // ===========================
+    private val _foodName = MutableStateFlow("")
+    val foodName = _foodName.asStateFlow()
 
-    fun onDurationChange(minutes: String) {
-        if (minutes.all { it.isDigit() } || minutes.isEmpty()) {
-            _uiState.update { it.copy(duration = minutes) }
+    private val _calories = MutableStateFlow("")
+    val calories = _calories.asStateFlow()
+
+    fun onFoodNameChange(text: String) { _foodName.value = text }
+    fun onCaloriesChange(text: String) { _calories.value = text }
+
+    fun saveFood() {
+        // --- VALIDACIÓN ---
+        if (_foodName.value.isBlank() || _calories.value.isBlank()) {
+            _saveMessage.value = "Error: Ingresa el alimento y sus calorías"
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val food = FoodEntity(
+                    foodName = _foodName.value,
+                    calories = _calories.value.toIntOrNull() ?: 0
+                )
+                dao.insertFood(food)
+                _foodName.value = ""
+                _calories.value = ""
+                _saveMessage.value = "¡Comida guardada correctamente!"
+            } catch (e: Exception) {
+                _saveMessage.value = "Error: ${e.message}"
+            }
         }
     }
 
-    fun onIntensityChange(newIntensity: Float) {
-        _uiState.update { it.copy(intensity = newIntensity) }
-    }
+    // ===========================
+    // 3. LÓGICA DE SUEÑO
+    // ===========================
+    private val _sleepHours = MutableStateFlow("")
+    val sleepHours = _sleepHours.asStateFlow()
 
-    fun onFoodItemChange(food: String) {
-        _uiState.update { it.copy(foodItem = food) }
+    private val _sleepQuality = MutableStateFlow(2f)
+    val sleepQuality = _sleepQuality.asStateFlow()
+
+    fun onSleepHoursChange(text: String) { _sleepHours.value = text }
+    fun onSleepQualityChange(value: Float) { _sleepQuality.value = value }
+
+    fun saveSleep() {
+        // --- VALIDACIÓN ---
+        if (_sleepHours.value.isBlank()) {
+            _saveMessage.value = "Error: Indica cuántas horas dormiste"
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val qualityText = when(_sleepQuality.value.toInt()) {
+                    1 -> "Mala"
+                    2 -> "Regular"
+                    else -> "Buena"
+                }
+                val sleep = SleepEntity(
+                    hours = _sleepHours.value.toFloatOrNull() ?: 0f,
+                    quality = qualityText
+                )
+                dao.insertSleep(sleep)
+                _sleepHours.value = ""
+                _sleepQuality.value = 2f
+                _saveMessage.value = "¡Sueño guardado correctamente!"
+            } catch (e: Exception) {
+                _saveMessage.value = "Error: ${e.message}"
+            }
+        }
+    }
+}
+
+class RegisterViewModelFactory(private val dao: ActivityDao) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(RegisterViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return RegisterViewModel(dao) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
